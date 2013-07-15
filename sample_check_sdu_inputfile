@@ -1,0 +1,19 @@
+###############################
+# TEST FILE
+# Input for:	sdu_check.pl
+# Updated:		06/24
+###############################
+4.3.2.1.0.0.0.0:/qfs8_delltest
+4.3.2.1.1.0.0.0:/qfs8_delltest/one
+4.3.2.1.2.0.0.0:/qfs8_delltest/two
+4.3.2.1.3.0.0.0:/qfs8_delltest/three
+4.3.2.2.0.0.0.0:/home
+4.3.2.2.1.0.0.0:/home/toucan
+4.3.2.2.1.1.0.0:/home/toucan/AddExample
+4.3.2.2.1.2.0.0:/home/toucan/Test
+4.3.2.2.2.0.0.0:/home/other
+4.3.2.2.2.1.0.0:/home/other/Example
+4.3.2.2.2.1.1.0:/home/other/Example/Another
+4.3.2.2.2.2.0.0:/home/other/Keep
+4.3.2.2.2.2.1.0:/home/other/Keep/It
+4.3.2.2.2.2.1.1:/home/other/Keep/It/Goings
