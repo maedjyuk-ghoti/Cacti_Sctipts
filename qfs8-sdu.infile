@@ -1,0 +1,19 @@
+###############################
+# TEST FILE
+# Input for:	samqfs8
+# Updated:		06/24
+###############################
+4.3.2.1.0.0.0.0:/qfs8_delltest
+4.3.2.1.1.0.0.0:/qfs8_delltest/one
+4.3.2.1.2.0.0.0:/qfs8_delltest/two
+4.3.2.1.3.0.0.0:/qfs8_delltest/three
+4.3.2.2.0.0.0.0:/home
+4.3.2.2.1.0.0.0:/home/beg
+4.3.2.2.1.1.0.0:/home/beg/AddExample
+4.3.2.2.1.2.0.0:/home/beg/Test
+4.3.2.2.2.0.0.0:/home/dierdre
+4.3.2.2.2.1.0.0:/home/dierdre/Example
+4.3.2.2.2.1.1.0:/home/dierdre/Example/Another
+4.3.2.2.2.2.0.0:/home/dierdre/Keep
+4.3.2.2.2.2.1.0:/home/dierdre/Keep/It
+4.3.2.2.2.2.1.1:/home/dierdre/Keep/It/Goings
