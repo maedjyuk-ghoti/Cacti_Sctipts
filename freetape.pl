@@ -8,7 +8,7 @@ use Switch 'Perl5';
 # FILE:         freetape.pl
 #
 # CREATED:      07/10/2013
-# UPDATED:      07/10/2013
+# UPDATED:      07/16/2013
 #
 # DESC:         This script is used for a nightly cronjob to check the amount
 #					of available tape.
@@ -27,29 +27,34 @@ use Switch 'Perl5';
 
 #Input file location
 my $input_dir = "/qfs5_misc/qfscfg/freetape/";
-
 #OID directory info
 my $storage_dir = "/var/run/collect/4/3/2/0";
 #Add extra hosts here
-my $samqfs = "/1";
-my $sancon = "/2";
+my $free_tape_itc   = "/0/1";
+my $free_tape_poole = "/0/2";
+my $samqfs          = "/1";
+my $sancon          = "/2";
 #Offset value to make dir for tape type
 my $a_value = (ord('a') - 1);
-
 #Error constants
 use constant {
-	NAME => 1,
-	DATE_FORM => 2,
-	DATE_OUT => 3,
-	INFO_ERR => 4,
+	NAME         => 1,
+	DATE_FORM    => 2,
+	DATE_OUT     => 3,
+	INFO_ERR     => 4,
 	HOSTNAME_DIF => 5,
 };
-
 #Create date stamp
 my ($seconds,$minutes,$hours,$mday,$month,$year,$wday,$yday,$isdst) = localtime();
 $year += 1900; # needed to adjust year appropriately
 my $date = $year.$month.$mday;
-
+#Important data to determine free tape per library
+my $itc_tape_total;
+my @itc_tape_alloc;
+my @itc_tape_used;
+my $poole_tape_total;
+my @poole_tape_alloc;
+my @poole_tape_used;
 #Loop through input_dir for files
 my @files = <$input_dir/*>;
 foreach my $file (@files) {
@@ -59,7 +64,7 @@ foreach my $file (@files) {
 		error_condition(NAME, $file);
 		next;
 	}
-	my $hostname = $file_split[0];
+	my $hostname  = $file_split[0];
 	my $file_date = $file_split[1];
 	#Check date form
 	if ($file_date ne \d{8}) {
@@ -71,7 +76,6 @@ foreach my $file (@files) {
 		error_condition(DATE_OUT, $file_date);
 		next;
 	}
-	
 	open (infile_handle, "< $file") || die "Couldn't open $file for read: $!\n";
 	while (my $line = <infile_handle>) {
 		chomp($line);
@@ -86,7 +90,7 @@ foreach my $file (@files) {
 		}
 		#tape_types is the number of tapes whose info is given on the line
 		my $tape_types = ((@info - 2) / 3);
-		my $location = $info[1];
+		my $location   = $info[1];
 		my @tape_name;
 		my @tape_alloc;
 		my @tape_used;
@@ -94,8 +98,26 @@ foreach my $file (@files) {
 			push (@tape_name, ($info[($tape_types * $i) + 2]));
 			push (@tape_alloc, ($info[($tape_types * $i) + 3]));
 			push (@tape_used, ($info[($tape_types * $i) + 4]));
+			if ($hostname ne "sancon[23]") {
+				if ($location eq "itc") {
+					push (@itc_tape_alloc, ($info[($tape_types * $i) + 3]));
+					push (@itc_tape_used, ($info[($tape_types * $i) + 4]));
+				}
+				if ($location eq "poole") {
+					push (@poole_tape_alloc, ($info[($tape_types * $i) + 3]));
+					push (@poole_tape_used, ($info[($tape_types * $i) + 4]));
+				}
+			}
+			else {
+				if ($location eq "itc") {
+					$itc_tape_total = ($info[($tape_types * $i) + 3]);
+				}
+				if ($location eq "poole") {
+					$poole_tape_total = ($info[($tape_types * $i) + 3]);
+				}
+			}
 		}
-		
+
 		#Creating the OID
 		# 4.3.2.0.<1>.<2>.<3>.<4>
 		# <1> split hostname and number
@@ -107,7 +129,7 @@ foreach my $file (@files) {
 		#	  A = 1, B = 2, etc.
 		# <4> alloc = 1, used = 2
 		# Ex.: Samqfs12, B tapes, Number Allocated = 4.3.2.0.1.12.2.1
-		
+
 		#Break apart hostname for OID use, rebuild it for later
 		push (my @host_id, substr ($hostname, index ($hostname, '\d')));
 		push (@host_id, $hostname);
@@ -143,6 +165,38 @@ foreach my $file (@files) {
 } # end foreach file
 close infile_handle;
 
+#Compute free tape
+my $itc_free_total = $itc_tape_total;
+for (my $i = 0; $i < @itc_tape_used; $i++) {
+  $itc_free_total -= $itc_tape_used[$i];
+}
+my $poole_free_total = $poole_tape_total;
+for (my $i = 0; $i < @poole_tape_used; $i++) {
+  $poole_free_total -= $poole_tape_used[$i];
+}
+#Store free tape information
+my $string = "";
+#itc_tape
+my $OID_dir = "";
+$OID_dir = $storage_dir . $free_tape_itc;
+open (outfile_handle, "> $OID_dir") || die "Couldn't open $OID_dir for write: $! \n";
+$string = join ('.', "0:", "ITC_Free_Tape:INTEGER:", $itc_free_total);
+print outfile_handle $string;
+close outfile_handle;
+#poole_tape
+$OID_dir = $storage_dir . $free_tape_poole;
+open (outfile_handle, "> $OID_dir") || die "Couldn't open $OID_dir for write: $! \n";
+$string = join ('.', "0:", "POOLE_Free_Tape:INTEGER:", $poole_free_total);
+print outfile_handle $string;
+close outfile_handle;
+
+###########
+# End Main
+###########
+
+##################
+# Begin Functions
+##################
 sub error_condition {
 	switch ($_[0]) {
 		case (NAME) {
